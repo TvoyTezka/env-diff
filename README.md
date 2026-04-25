@@ -34,6 +34,18 @@ Use `--json` for machine-readable output:
 dotenv-diff .env.example .env --json
 ```
 
+Create `.env.example` from `.env` with empty values:
+
+```bash
+dotenv-diff --init
+```
+
+If `.env.example` already exists, use `--force` to overwrite it:
+
+```bash
+dotenv-diff --init --force
+```
+
 ## Development
 
 ```bash
@@ -44,4 +56,3 @@ python -m pytest
 ## License
 
 MIT
-

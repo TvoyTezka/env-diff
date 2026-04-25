@@ -14,8 +14,30 @@ def build_parser() -> argparse.ArgumentParser:
         prog="dotenv-diff",
         description="Compare dotenv files and find missing, extra, and empty variables.",
     )
-    parser.add_argument("example", type=Path, help="Expected dotenv file, for example .env.example")
-    parser.add_argument("actual", type=Path, help="Actual dotenv file, for example .env")
+    parser.add_argument(
+        "example",
+        nargs="?",
+        type=Path,
+        default=Path(".env.example"),
+        help="Expected dotenv file, for example .env.example",
+    )
+    parser.add_argument(
+        "actual",
+        nargs="?",
+        type=Path,
+        default=Path(".env"),
+        help="Actual dotenv file, for example .env",
+    )
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Create .env.example from .env with empty values.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite the example file when used with --init.",
+    )
     parser.add_argument(
         "--strict",
         action="store_true",
@@ -33,6 +55,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.init:
+        return init_example_file(args.actual, args.example, force=args.force)
 
     try:
         expected = parse_dotenv_file(args.example)
@@ -54,6 +79,26 @@ def main(argv: list[str] | None = None) -> int:
     if args.strict and diff.has_issues:
         return 1
 
+    return 0
+
+
+def init_example_file(actual_path: Path, example_path: Path, *, force: bool = False) -> int:
+    if example_path.exists() and not force:
+        print(f"dotenv-diff: {example_path} already exists; use --force to overwrite", file=sys.stderr)
+        return 2
+
+    try:
+        actual = parse_dotenv_file(actual_path)
+    except OSError as error:
+        print(f"dotenv-diff: {error}", file=sys.stderr)
+        return 2
+    except DotenvParseError as error:
+        print(f"dotenv-diff: {error}", file=sys.stderr)
+        return 2
+
+    lines = [f"{key}=" for key in actual]
+    example_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Created {example_path} from {actual_path}.")
     return 0
 
 
@@ -85,4 +130,3 @@ def print_diff(diff: EnvDiff) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
