@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from dotenv_diff import __version__
 from dotenv_diff.diff import EnvDiff, compare_envs
 from dotenv_diff.parser import DotenvParseError, parse_dotenv_file
 
@@ -13,20 +14,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dotenv-diff",
         description="Compare dotenv files and find missing, extra, and empty variables.",
+        epilog=(
+            "With --init, the positional arguments keep the same order: "
+            "example is the output file and actual is the source file."
+        ),
     )
     parser.add_argument(
         "example",
         nargs="?",
         type=Path,
         default=Path(".env.example"),
-        help="Expected dotenv file, for example .env.example",
+        help="Expected dotenv file, or output file when used with --init.",
     )
     parser.add_argument(
         "actual",
         nargs="?",
         type=Path,
         default=Path(".env"),
-        help="Actual dotenv file, for example .env",
+        help="Actual dotenv file, or source file when used with --init.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
         "--init",
